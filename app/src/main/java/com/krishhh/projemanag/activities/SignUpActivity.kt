@@ -1,6 +1,5 @@
 package com.krishhh.projemanag.activities
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.TextUtils
 import android.view.WindowManager
@@ -10,15 +9,17 @@ import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.krishhh.projemanag.R
-import com.krishhh.projemanag.databinding.ActivitySignupBinding
+import com.krishhh.projemanag.databinding.ActivitySignUpBinding
+import com.krishhh.projemanag.firebase.FirestoreClass
+import com.krishhh.projemanag.models.User
 
 class SignUpActivity : BaseActivity() {
 
-    private lateinit var binding: ActivitySignupBinding
+    private lateinit var binding: ActivitySignUpBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivitySignupBinding.inflate(layoutInflater)
+        binding = ActivitySignUpBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         // This is used to hide the status bar and make the splash screen as a full screen activity.
@@ -47,9 +48,9 @@ class SignUpActivity : BaseActivity() {
     // A function to register a user to our app using the Firebase.
     private fun registerUser() {
         // Here we get the text from editText and trim the space
-        val name: String = binding.etName.text.toString().trim { it <= ' ' }
-        val email: String = binding.etEmail.text.toString().trim { it <= ' ' }
-        val password: String = binding.etPassword.text.toString().trim { it <= ' ' }
+        val name: String = binding.etNameSignup.text.toString().trim { it <= ' ' }
+        val email: String = binding.etEmailSignup.text.toString().trim { it <= ' ' }
+        val password: String = binding.etPasswordSignup.text.toString().trim { it <= ' ' }
 
         if (validateForm(name, email, password)) {
             // Show the progress dialog.
@@ -58,7 +59,6 @@ class SignUpActivity : BaseActivity() {
             FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(
                     OnCompleteListener<AuthResult> { task ->
-                        hideProgressDialog()
 
                         // If the registration is successfully done
                         if (task.isSuccessful) {
@@ -67,15 +67,13 @@ class SignUpActivity : BaseActivity() {
                             val firebaseUser: FirebaseUser = task.result!!.user!!
                             // Registered Email
                             val registeredEmail = firebaseUser.email!!
+                            // Now here we will make an entry in the Database of a new user registered.
+                            val user = User(firebaseUser.uid, name, registeredEmail)
 
-                            Toast.makeText(
-                                this@SignUpActivity,
-                                "$name you have successfully registered with email id $registeredEmail.",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            // call the registerUser function of Firestore Class to make an entry in the database.
+                            FirestoreClass().registerUser(this@SignUpActivity, user)
 
-                            FirebaseAuth.getInstance().signOut()
-                            finish()
+
                         } else {
                             Toast.makeText(
                                 this@SignUpActivity,
@@ -112,4 +110,20 @@ class SignUpActivity : BaseActivity() {
             }
         }
     }
+
+    // A function to be called the user is registered successfully and entry is made in the firestore database.
+    fun userRegisteredSuccess() {
+
+        Toast.makeText(
+            this@SignUpActivity,
+            "You have successfully registered.",
+            Toast.LENGTH_SHORT
+        ).show()
+
+        hideProgressDialog()
+
+        FirebaseAuth.getInstance().signOut()
+        finish()
+    }
+
 }

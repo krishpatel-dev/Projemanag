@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.view.WindowManager
 import com.krishhh.projemanag.databinding.ActivitySplashBinding
+import com.krishhh.projemanag.firebase.FirestoreClass
 
 class SplashActivity : AppCompatActivity() {
 
@@ -30,8 +31,20 @@ class SplashActivity : AppCompatActivity() {
 
         // Adding the handler to after the a task after some delay.
         Handler().postDelayed({
-            startActivity(Intent(this@SplashActivity, IntroActivity::class.java))
-            finish()}, 2000)
+
+            // Get the current user id
+            val currentUserID = FirestoreClass().getCurrentUserID()
+
+            // Start the Intro Activity
+            if (currentUserID.isNotEmpty()) {
+                // Start the Main Activity
+                startActivity(Intent(this@SplashActivity, MainActivity::class.java))
+            } else {
+                // Start the Intro Activity
+                startActivity(Intent(this@SplashActivity, IntroActivity::class.java))
+            }
+            finish()
+        }, 1700)
 
     }
 }
