@@ -45,12 +45,12 @@ class MyProfileActivity : BaseActivity() {
                 == PackageManager.PERMISSION_GRANTED
             ) {
                 // Call the image chooser function.
-                showImageChooser()
+                Constants.showImageChooser(this@MyProfileActivity)
             } else {
                 ActivityCompat.requestPermissions(
                     this,
                     arrayOf(Manifest.permission.READ_MEDIA_IMAGES),
-                    READ_STORAGE_PERMISSION_CODE
+                    Constants.READ_STORAGE_PERMISSION_CODE
                 )
             }
         }
@@ -72,7 +72,7 @@ class MyProfileActivity : BaseActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == Activity.RESULT_OK
-            && requestCode == PICK_IMAGE_REQUEST_CODE
+            && requestCode == Constants.PICK_IMAGE_REQUEST_CODE
             && data!!.data != null
         ) {
             // The uri of selection image from phone storage.
@@ -99,10 +99,10 @@ class MyProfileActivity : BaseActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == READ_STORAGE_PERMISSION_CODE) {
+        if (requestCode == Constants.READ_STORAGE_PERMISSION_CODE) {
             //If permission is granted
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                showImageChooser()
+                Constants.showImageChooser(this@MyProfileActivity)
             } else {
                 if (!ActivityCompat.shouldShowRequestPermissionRationale(
                         this,
@@ -163,17 +163,6 @@ class MyProfileActivity : BaseActivity() {
         }
     }
 
-    // A function for user profile image selection from phone storage.
-    private fun showImageChooser() {
-        // An intent for launching the image selection of phone storage.
-        val galleryIntent = Intent(
-            Intent.ACTION_PICK,
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-        )
-        // Launches the image selection of phone storage using the constant code.
-        startActivityForResult(galleryIntent, PICK_IMAGE_REQUEST_CODE)
-    }
-
     // A function to upload the selected user image to firebase cloud storage.
     private fun uploadUserImage() {
 
@@ -182,9 +171,8 @@ class MyProfileActivity : BaseActivity() {
         if (mSelectedImageFileUri != null) {
             //getting the storage reference
             val sRef: StorageReference = FirebaseStorage.getInstance().reference.child(
-                "USER_IMAGE" + System.currentTimeMillis() + "." + getFileExtension(
-                    mSelectedImageFileUri
-                )
+                "USER_IMAGE" + System.currentTimeMillis() + "." + Constants.getFileExtension(
+                    this@MyProfileActivity, mSelectedImageFileUri)
             )
 
             //adding the file to reference
@@ -258,15 +246,6 @@ class MyProfileActivity : BaseActivity() {
         setResult(Activity.RESULT_OK)
 
         finish()
-    }
-
-    // A companion object to declare the constants.
-    companion object {
-        //A unique code for asking the Read Storage Permission using this we will be check and identify in the method onRequestPermissionsResult
-        private const val READ_STORAGE_PERMISSION_CODE = 1
-
-        // Add a constant for image selection from phone storage
-        private const val PICK_IMAGE_REQUEST_CODE = 2
     }
 
 }
