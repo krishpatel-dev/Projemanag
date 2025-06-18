@@ -11,6 +11,7 @@ import com.krishhh.projemanag.activities.MainActivity
 import com.krishhh.projemanag.activities.MyProfileActivity
 import com.krishhh.projemanag.activities.SignInActivity
 import com.krishhh.projemanag.activities.SignUpActivity
+import com.krishhh.projemanag.activities.TaskListActivity
 import com.krishhh.projemanag.models.Board
 import com.krishhh.projemanag.models.User
 import com.krishhh.projemanag.utils.Constants
@@ -95,21 +96,6 @@ class FirestoreClass {
 
     }
 
-    // A function for getting the user id of current logged user.
-    fun getCurrentUserID(): String {
-
-        // An Instance of currentUser using FirebaseAuth
-        val currentUser = FirebaseAuth.getInstance().currentUser
-
-        // A variable to assign the currentUserId if it is not null or else it will be blank.
-        var currentUserID = ""
-        if (currentUser != null) {
-            currentUserID = currentUser.uid
-        }
-
-        return currentUserID
-    }
-
     // A function to update the user profile data into the database.
     fun updateUserProfileData(activity: MyProfileActivity, userHashMap: HashMap<String, Any>) {
         mFireStore.collection(Constants.USERS) // Collection Name
@@ -191,6 +177,61 @@ class FirestoreClass {
             }
     }
 
+    // A function to get the Board Details.
+    fun getBoardDetails(activity: TaskListActivity, documentId: String) {
+        mFireStore.collection(Constants.BOARDS)
+            .document(documentId)
+            .get()
+            .addOnSuccessListener { document ->
+                Log.e(activity.javaClass.simpleName, document.toString())
+
+                // Assign the board document id to the Board Detail object
+                val board = document.toObject(Board::class.java)!!
+                board.documentId = document.id
+
+                // Send the result of board to the base activity.
+                activity.boardDetails(board)
+
+            }
+            .addOnFailureListener { e ->
+                activity.hideProgressDialog()
+                Log.e(activity.javaClass.simpleName, "Error while creating a board.", e)
+            }
+    }
+
+    // A function to create a task list in the board detail.
+    fun addUpdateTaskList(activity: TaskListActivity, board: Board) {
+
+        val taskListHashMap = HashMap<String, Any>()
+        taskListHashMap[Constants.TASK_LIST] = board.taskList
+
+        mFireStore.collection(Constants.BOARDS)
+            .document(board.documentId)
+            .update(taskListHashMap)
+            .addOnSuccessListener {
+                Log.e(activity.javaClass.simpleName, "TaskList updated successfully.")
+
+                activity.addUpdateTaskListSuccess()
+            }
+            .addOnFailureListener { e ->
+                activity.hideProgressDialog()
+                Log.e(activity.javaClass.simpleName, "Error while creating a board.", e)
+            }
+    }
 
 
+    // A function for getting the user id of current logged user.
+    fun getCurrentUserID(): String {
+
+        // An Instance of currentUser using FirebaseAuth
+        val currentUser = FirebaseAuth.getInstance().currentUser
+
+        // A variable to assign the currentUserId if it is not null or else it will be blank.
+        var currentUserID = ""
+        if (currentUser != null) {
+            currentUserID = currentUser.uid
+        }
+
+        return currentUserID
+    }
 }
