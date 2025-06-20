@@ -22,6 +22,13 @@ object Constants {
     const val TASK_LIST: String = "taskList"
     const val BOARD_DETAIL: String = "board_detail"
     const val ID: String = "id"
+    const val EMAIL: String = "email"
+    const val BOARD_MEMBERS_LIST: String = "board_members_list"
+
+    // Add all the required constants for passing the details to CardDetailsActivity through intent.
+    const val TASK_LIST_ITEM_POSITION: String = "task_list_item_position"
+    const val CARD_LIST_ITEM_POSITION: String = "card_list_item_position"
+
 
     //A unique code for asking the Read Storage Permission using this we will be check and identify in the method onRequestPermissionsResult
     const val READ_STORAGE_PERMISSION_CODE = 1

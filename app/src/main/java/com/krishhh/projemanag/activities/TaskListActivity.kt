@@ -1,5 +1,6 @@
 package com.krishhh.projemanag.activities
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -14,27 +15,29 @@ import com.krishhh.projemanag.utils.Constants
 import com.krishhh.projemanag.databinding.ActivityTaskListBinding
 import com.krishhh.projemanag.models.Card
 import com.krishhh.projemanag.models.Task
+import com.krishhh.projemanag.models.User
 
 class TaskListActivity : BaseActivity() {
 
     private lateinit var binding: ActivityTaskListBinding
     private lateinit var mBoardDetails: Board
+    private lateinit var mBoardDocumentId: String
+    private lateinit var mAssignedMembersDetailList: ArrayList<User>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityTaskListBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Get the board documentId through intent.
-        var boardDocumentId = ""
+        // Make the document id global.
         if (intent.hasExtra(Constants.DOCUMENT_ID)) {
-            boardDocumentId = intent.getStringExtra(Constants.DOCUMENT_ID)!!
+            mBoardDocumentId = intent.getStringExtra(Constants.DOCUMENT_ID)!!
         }
 
         // Call the function to get the Board Details.
         // Show the progress dialog.
         showProgressDialog(resources.getString(R.string.please_wait))
-        FirestoreClass().getBoardDetails(this@TaskListActivity, boardDocumentId)
+        FirestoreClass().getBoardDetails(this@TaskListActivity, mBoardDocumentId)
     }
 
     // A function to setup action bar
@@ -65,13 +68,27 @@ class TaskListActivity : BaseActivity() {
             R.id.action_members -> {
                 val intent = Intent(this@TaskListActivity, MembersActivity::class.java)
                 intent.putExtra(Constants.BOARD_DETAIL, mBoardDetails)
-                startActivity(intent)
+                startActivityForResult(intent, MEMBERS_REQUEST_CODE)
                 return true
             }
         }
         return super.onOptionsItemSelected(item)
     }
 
+    // Add the onActivityResult function add based on the requested document get the updated board details.
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == Activity.RESULT_OK
+            && requestCode == MEMBERS_REQUEST_CODE
+            || requestCode == CARD_DETAILS_REQUEST_CODE
+        ) {
+            // Show the progress dialog.
+            showProgressDialog(resources.getString(R.string.please_wait))
+            FirestoreClass().getBoardDetails(this@TaskListActivity, mBoardDocumentId)
+        } else {
+            Log.e("Cancelled", "Cancelled")
+        }
+    }
 
     // A function to get the result of Board Detail.
     fun boardDetails(board: Board) {
@@ -93,6 +110,15 @@ class TaskListActivity : BaseActivity() {
         // Create an instance of TaskListItemsAdapter and pass the task list to it.
         val adapter = TaskListItemsAdapter(this@TaskListActivity, board.taskList)
         binding.rvTaskList.adapter = adapter // Attach the adapter to the recyclerView.
+
+
+        // Get all the members detail list which are assigned to the board.
+        showProgressDialog(resources.getString(R.string.please_wait))
+        FirestoreClass().getAssignedMembersListDetails(
+            this@TaskListActivity,
+            mBoardDetails.assignedTo
+        )
+
     }
 
     // A function to get the task list name from the adapter class which we will be using to create a new task list in the database.
@@ -174,5 +200,27 @@ class TaskListActivity : BaseActivity() {
         FirestoreClass().addUpdateTaskList(this@TaskListActivity, mBoardDetails)
     }
 
+    // A function for viewing and updating card details.
+    fun cardDetails(taskListPosition: Int, cardPosition: Int) {
+        val intent = Intent(this@TaskListActivity, CardDetailsActivity::class.java)
+        intent.putExtra(Constants.BOARD_DETAIL, mBoardDetails)
+        intent.putExtra(Constants.TASK_LIST_ITEM_POSITION, taskListPosition)
+        intent.putExtra(Constants.CARD_LIST_ITEM_POSITION, cardPosition)
+        intent.putExtra(Constants.BOARD_MEMBERS_LIST, mAssignedMembersDetailList)
+        startActivityForResult(intent, CARD_DETAILS_REQUEST_CODE)
+    }
 
+    // A function to get assigned members detail list.
+    fun boardMembersDetailList(list: ArrayList<User>) {
+        mAssignedMembersDetailList = list
+        hideProgressDialog()
+    }
+
+
+    // A companion object to declare the constants.
+    companion object {
+        //A unique code for starting the activity for result
+        const val MEMBERS_REQUEST_CODE: Int = 13
+        const val CARD_DETAILS_REQUEST_CODE: Int = 134
+    }
 }

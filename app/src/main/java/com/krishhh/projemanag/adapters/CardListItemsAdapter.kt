@@ -1,7 +1,9 @@
 package com.krishhh.projemanag.adapters
 
 import android.content.Context
+import android.graphics.Color
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.krishhh.projemanag.models.Card
@@ -25,11 +27,19 @@ open class CardListItemsAdapter(
         val model = list[position]
 
         if (holder is MyViewHolder) {
+
+            if(model.labelColor.isNotEmpty()){
+                holder.binding.viewLabelColor.visibility = View.VISIBLE
+                holder.binding.viewLabelColor.setBackgroundColor(Color.parseColor(model.labelColor))
+            }else{
+                holder.binding.viewLabelColor.visibility = View.GONE
+            }
+
             holder.binding.tvCardName.text = model.name
 
             holder.binding.root.setOnClickListener {
                 if (onClickListener != null) {
-                    onClickListener!!.onClick(position, model)
+                    onClickListener!!.onClick(position)
                 }
             }
         }
@@ -47,7 +57,7 @@ open class CardListItemsAdapter(
 
     // An interface for onclick items.
     interface OnClickListener {
-        fun onClick(position: Int, card: Card)
+        fun onClick(position: Int)
     }
 
     // A ViewHolder describes an item view and metadata about its place within the RecyclerView.
